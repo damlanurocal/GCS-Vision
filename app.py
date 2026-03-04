@@ -42,21 +42,21 @@ def vision_feed():
     # 1. Hazırlık ve Boyutlandırma
     resized_img = cv2.resize(image, (640, 480))
     
-    # 2. RENK ANALİZİ (Arka Planda): Turuncu tonlarını bulalım
+    # 2. RENK ANALİZİ (Arka Planda): Turuncu tonlarını bulur
     hsv = cv2.cvtColor(resized_img, cv2.COLOR_BGR2HSV)
     alt_turuncu = np.array([0, 100, 100])  # Turuncu alt limit
     ust_turuncu = np.array([20, 255, 255]) # Turuncu üst limit
     maske = cv2.inRange(hsv, alt_turuncu, ust_turuncu)
 
-    # 3. KONTUR BULMA: Turuncu olan yerlerin etrafını saptayalım
+    # 3. KONTUR BULMA: Turuncu olan yerlerin etrafını saptar
     konturlar, _ = cv2.findContours(maske, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    # 4. GÖRÜNTÜYÜ HAZIRLA: Operatör için Siyah-Beyaz HUD oluştur
+    # 4. GÖRÜNTÜYÜ HAZIRLA: Operatör için Siyah-Beyaz HUD oluşturur
     gray = cv2.cvtColor(resized_img, cv2.COLOR_BGR2GRAY)
     final_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
-    # 5. HEDEFİ İŞARETLE: Eğer turuncu bir şey bulunduysa kare içine al
-    # 5. HEDEFİ İŞARETLE: Tüm parçaları tek bir büyük kutuda birleştir
+    # 5. HEDEFİ İŞARETLE: Eğer turuncu bir şey bulunduysa kare içine alır
+    # 5. HEDEFİ İŞARETLE: Tüm parçaları tek bir büyük kutuda birleştirir
     all_x = []
     all_y = []
     all_w = []

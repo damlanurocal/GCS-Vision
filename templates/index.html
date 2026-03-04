@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Telemetri ve Grafik Paneli</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 1200px; margin: 20px auto; }
+        .card { background: #1e293b; border-bottom: 4px solid #f838d8; padding: 15px; border-radius: 12px; text-align: center; }
+        .card h3 { color: #94a3b8; font-size: 12px; text-transform: uppercase; margin: 0; }
+        .card h2 { font-size: 28px; margin: 5px 0; color: #38bdf8; }
+        .grafik-kapsayici { background: #1e293b; padding: 20px; border-radius: 12px; max-width: 1200px; margin: 20px auto; height: 300px; }
+        h1 { text-align: center; color: #ffffff; }
+    </style>
+</head>
+<body>
+    <h1>SİSTEM TELEMETRİ VE ANALİZ</h1>
+
+    <div id="ram-uyari" style="display: none; background: #ef4444; color: white; text-align: center; padding: 10px; margin: 10px auto; max-width: 1200px; border-radius: 8px; font-weight: bold; animation: pulse 1s infinite;">
+    ⚠️ DİKKAT: Bellek kullanımı çok yüksek! Lütfen gereksiz sekmeleri kapatın.
+</div>
+
+<style>
+    /* Uyarı kutusunun dikkat çekmesi için yanıp sönme efekti */
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+    
+    <div class="grid">
+        <div class="card"><h3>İşlemci</h3><h2 id="cpu">%0</h2></div>
+        <div class="card"><h3>Bellek</h3><h2 id="ram">%0</h2></div>
+        <div class="card"><h3>Disk</h3><h2 id="disk">%0</h2></div>
+        <div class="card"><h3>Süre</h3><h2 id="sure">0 sn</h2></div>
+    </div>
+
+    <div class="grafik-kapsayici">
+        <canvas id="sicaklikGrafik"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 30px; background: #1e293b; padding: 20px; border-radius: 15px;">
+    <h3 style="color: #38bdf8; font-family: sans-serif; letter-spacing: 2px;">IDA VISION SYSTEM</h3>
+    <img src="/vision_feed" style="width: 90%; border: 2px solid #38bdf8; border-radius: 10px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);">
+</div>
+
+   <script>
+        // GRAFİK AYARLARI
+        const ctx = document.getElementById('sicaklikGrafik').getContext('2d');
+        const veriLimit = 20; 
+        
+        const grafik = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'İşlemci (CPU) Kullanım Trendi (%)',
+                    data: [],
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: '#334155' } },
+                    x: { grid: { color: '#334155' } }
+                }
+            }
+        });
+
+        // VERİ GÜNCELLEME DÖNGÜSÜ
+        setInterval(function() {
+            fetch('/guncel_veri')
+                .then(res => res.json())
+                .then(data => {
+                    // 1. Üstteki kartları güncelle
+                    document.getElementById('cpu').innerText = "%" + data.cpu;
+                    document.getElementById('ram').innerText = "%" + data.ram;
+                    document.getElementById('disk').innerText = "%" + data.disk;
+                    document.getElementById('sure').innerText = data.sure + " sn";
+
+                    // 2. RAM Uyarı Mekanizmasını Kontrol Et
+                    const uyari = document.getElementById('ram-uyari');
+                    if (data.ram > 85) {
+                        uyari.style.display = 'block';
+                    } else {
+                        uyari.style.display = 'none';
+                    }
+
+                    // 3. Grafiğe yeni veri ekle
+                    const zaman = new Date().toLocaleTimeString();
+                    
+                    if (grafik.data.labels.length > veriLimit) {
+                        grafik.data.labels.shift();
+                        grafik.data.datasets[0].data.shift();
+                    }
+                    
+                    grafik.data.labels.push(zaman);
+                    grafik.data.datasets[0].data.push(data.cpu);
+                    grafik.update('none'); 
+                })
+                .catch(err => console.error("Veri çekme hatası:", err)); // Hata kontrolü ekledik
+        }, 1000);
+    </script>

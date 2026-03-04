@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # System monitoring function
 def get_system_data():
-    # DÜZELTME: interval=0.1 ekledik, böylece CPU kullanımı %0'dan kurtulacak
+    
     cpu_usage = psutil.cpu_percent(interval=0.1)
     gecen_sure = int(time.time() - baslangic_zamani)
     
@@ -64,7 +64,7 @@ def vision_feed():
     target_status = "SEARCHING..."
 
     for kontur in konturlar:
-        if cv2.contourArea(kontur) > 100: # Hassasiyeti biraz artırdık
+        if cv2.contourArea(kontur) > 100: 
             x, y, w, h = cv2.boundingRect(kontur)
             all_x.append(x)
             all_y.append(y)
@@ -72,40 +72,38 @@ def vision_feed():
             all_y.append(y + h)
             target_status = "TARGET LOCKED"
 
-    # Eğer en az bir parça bulunduysa, hepsini kapsayan tek bir kutu çiz
+    # Eğer en az bir parça bulunduysa, hepsini kapsayan tek bir kutu çizer
     if all_x and all_y:
         min_x, max_x = min(all_x), max(all_x)
         min_y, max_y = min(all_y), max(all_y)
 
-        # --- DÖNGÜ BİTTİ, ŞİMDİ HESAPLIYORUZ ---
+        #DÖNGÜ BİTTİ,HESAPLAR
         w_pixel = max_x - min_x
         
-        f = 500 # Kamera kalibrasyon değeri
+        f = 500 
         W_real = 8 # Portakalın gerçek genişliği (cm)
         
         distance = (W_real * f) / w_pixel
         distance_m = round(distance / 100, 2)
         
-        # Çizim ve Komut işlemleri buradan devam eder...
+        # Çizim ve Komut işlemleri
         cv2.rectangle(final_img, (min_x, min_y), (max_x, max_y), (0, 255, 0), 2)
         
-        # Mesafeyi ekrana yazdırıyoruz
+        # Mesafeyi ekrana yazar
         cv2.putText(final_img, f"DISTANCE: {distance_m} m", (20, 140), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0 ,0, 0), 2)
 
         
-        # Tek ana kutuyu çiz (Yeşil)
+        # Tek ana kutuyu çizer (Yeşil)
         cv2.rectangle(final_img, (min_x, min_y), (max_x, max_y), (0, 255, 0), 2)
         
-        # Sol üst köşeye genel koordinatı yazdır
+        # Sol üst köşeye genel koordinatı yazdırır
         cv2.putText(final_img, f"X:{min_x} Y:{min_y}", (min_x, min_y - 10), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
     
 
     else:
-        # BURASI YENİ KISIM: Hedef bulunamadığında yapılacaklar
-        # 'if' ile aynı hizada (indentation) olmalı!
-        
+        #Hedef bulunamadığında yapılacaklar
         # 1. Hedef Kaybı Uyarısı (Kırmızı)
         cv2.putText(final_img, "TARGET LOST - SEARCHING...", (20, 80), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 3)
@@ -114,11 +112,11 @@ def vision_feed():
         cv2.putText(final_img, "COMMAND: STOP & SCAN", (20, 115), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         
-    # 5.1 OTONOM DÜMEN TAVSİYESİ (Mantıksal Karar)
+    # 5.1 OTONOM DÜMEN (Mantıksal Karar)
     if all_x and all_y:
-        # Nesnenin merkezini hesapla
+        # Nesnenin merkezini hesaplar
         obj_center_x = int((min_x + max_x) / 2)
-        screen_center_x = 640 // 2 # Ekran genişliğinin tam ortası (320)
+        screen_center_x = 640 // 2 
         
         # Sapma miktarını hesapla
         sapma = obj_center_x - screen_center_x
@@ -134,19 +132,19 @@ def vision_feed():
             command = "STAY ON COURSE"
             color = (0, 255, 0) # Güvenli geçiş için Yeşil
 
-        # Ekrana Komutu Yazdır
+        # Ekrana Komutu Yazdırır
         cv2.putText(final_img, f"COMMAND: {command}", (20, 100), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
         
-        # Merkeze hayali bir rehber çizgi çekelim (Görsel referans için)
+        # Merkezde hayali bir rehber çizgi (Görsel referans için)
         cv2.line(final_img, (320, 120), (320, 360), (255, 255, 255), 1)    
 
-    # 6. HUD Yazılarını Yaz
+    # 6. HUD Yazılarını Yazar
     ram_usage = psutil.virtual_memory().percent
     status_text = f"{target_status} - RAM: {ram_usage}%"
     cv2.putText(final_img, status_text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
-    # 7. Paketle ve gönder
+    # 7. Paketler ve gönderir
     _, buffer = cv2.imencode('.jpg', final_img)
     return Response(buffer.tobytes(), mimetype='image/jpeg')
 

@@ -27,5 +27,5 @@ GCS-Vision, insansız deniz araçları (İDA) ve otonom platformlar için geliş
 
 1. **Repoyu klonlayın:**
    ```bash
-   git clone [https://github.com/KULLANICI_ADI/GCS-Vision.git](https://github.com/KULLANICI_ADI/GCS-Vision.git)
+   git clone https://github.com/damlanurocal/GCS-Vision.git
    cd GCS-Vision
